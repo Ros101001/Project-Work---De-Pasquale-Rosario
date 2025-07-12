@@ -1,0 +1,531 @@
+Creazione della base di dati
+
+CREATE DATABASE VoloItalia;
+
+CREATE TABLE Nazione( 
+    idNazione INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY, 
+    nome VARCHAR(30) NOT NULL
+);
+ 
+CREATE TABLE Aereo( 
+    idAereo INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY, 
+    modello VARCHAR(30) NOT NULL,
+    matricola VARCHAR(30) NOT NULL,
+    anno INT NOT NULL CHECK (anno BETWEEN 1900 AND 2025)
+);
+ 
+CREATE TABLE Citta(
+    idCitta INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY, 
+    nome VARCHAR(50) NOT NULL,  
+    idNazione INT(11) NOT NULL,
+    FOREIGN KEY(idNazione) REFERENCES Nazione(idNazione)
+);
+ 
+CREATE TABLE Aeroporto(
+    codiceIataAeroporto CHAR(3) NOT NULL PRIMARY KEY, 
+    nome VARCHAR(50) NOT NULL,
+    idCitta INT(11) NOT NULL,
+    FOREIGN KEY(idCitta) REFERENCES Citta(idCitta)
+);
+ 
+CREATE TABLE Tratta(
+    idTratta INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    AeroportoPartenza CHAR(3) NOT NULL,
+    AeroportoArrivo CHAR(3) NOT NULL,
+    FOREIGN KEY(AeroportoPartenza) REFERENCES Aeroporto(codiceIataAeroporto),
+    FOREIGN KEY(AeroportoArrivo) REFERENCES Aeroporto(codiceIataAeroporto)
+);
+ 
+CREATE TABLE Volo(
+    idVolo INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    codiceVolo VARCHAR(10) NOT NULL,
+    dataOraPartenza DATETIME NOT NULL,
+    dataOraArrivo DATETIME NOT NULL,
+    idAereo INT(11) NOT NULL,
+    idTratta INT(11) NOT NULL,
+    FOREIGN KEY(idAereo) REFERENCES Aereo(idAereo),
+    FOREIGN KEY(idTratta) REFERENCES Tratta(idTratta)
+);
+ 
+CREATE TABLE Passeggero(
+    idPasseggero INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY, 
+    nome VARCHAR(30) NOT NULL,
+    cognome VARCHAR(30) NOT NULL,
+    dataNascita DATE NOT NULL,
+    telefono VARCHAR(20) NOT NULL
+);
+ 
+CREATE TABLE ClasseServizio(
+    idClasseServizio INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    tipologia VARCHAR(30) NOT NULL
+);
+ 
+CREATE TABLE Itinerario(
+    idItinerario INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    nome VARCHAR(15) NOT NULL
+);
+ 
+CREATE TABLE ItinerarioTratta(
+    idItinerarioTratta INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    ordine INT(3) NOT NULL,
+    idItinerario INT(11) NOT NULL,
+    idTratta INT(11) NOT NULL,
+    FOREIGN KEY(idItinerario) REFERENCES Itinerario(idItinerario),
+    FOREIGN KEY(idTratta) REFERENCES Tratta(idTratta),
+    UNIQUE (idItinerario, ordine)
+);
+ 
+CREATE TABLE Biglietto(
+    idBiglietto INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    prezzo NUMERIC(6, 2) NOT NULL CHECK (prezzo > 0),
+    dataAcquisto DATETIME,
+    idPasseggero INT(11),
+    idClasseServizio INT(11) NOT NULL,
+    idItinerario INT(11) NOT NULL,
+    FOREIGN KEY(idPasseggero) REFERENCES Passeggero(idPasseggero),
+    FOREIGN KEY(idClasseServizio) REFERENCES ClasseServizio(idClasseServizio),
+    FOREIGN KEY(idItinerario) REFERENCES Itinerario(idItinerario),
+    UNIQUE (idItinerario, idPasseggero)
+);
+ 
+CREATE TABLE BigliettoVolo(
+    idBigliettoVolo INT(11) AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    posto VARCHAR(10) NOT NULL,
+    idBiglietto INT(11) NOT NULL,
+    idVolo INT(11) NOT NULL,
+    FOREIGN KEY(idBiglietto) REFERENCES Biglietto(idBiglietto),
+    FOREIGN KEY(idVolo) REFERENCES Volo(idVolo),
+    UNIQUE (idVolo, posto),
+    UNIQUE (idBiglietto, idVolo)
+);
+
+
+Creazione indici
+
+CREATE INDEX idx_Citta_nome ON Citta(nome);
+CREATE INDEX idx_Volo_dataOraPartenza ON Volo(dataOraPartenza);
+CREATE INDEX idx_Nazione_nome ON Nazione(nome);
+
+
+Inserimento dei dati
+
+INSERT INTO Passeggero (idPasseggero, nome, cognome, dataNascita, telefono) VALUES
+(null, 'Luca', 'Boni', '1987-04-15', '+39 345 6781234'),
+(null, 'Martina', 'Spada', '1992-09-23', '+39 328 9023456'),
+(null, 'Giovanni', 'Verdi', '1980-01-08', '+39 333 4455667'),
+(null, 'Elisa', 'Ferrero', '1995-11-30', '+39 347 1234567'),
+(null, 'Marco', 'De Santis', '1983-06-12', '+39 349 9988776'),
+(null, 'Chiara', 'Colombo', '2001-03-02', '+39 340 2345678'),
+(null, 'Federico', 'Romano', '1978-10-18', '+39 320 8765432'),
+(null, 'Francesca', 'Gallo', '1985-07-25', '+39 345 2223334'),
+(null, 'Alessandro', 'Conti', '2003-12-04', '+39 338 1112233'),
+(null, 'Sara', 'Moretti', '1989-05-19', '+39 336 7896543');
+
+INSERT INTO Nazione (idNazione, nome) VALUES
+(null, 'Italia'),
+(null, 'Regno Unito'),
+(null, 'Francia'),
+(null, 'Spagna'),
+(null, 'Germania'),
+(null, 'Belgio'),
+(null, 'Irlanda'),
+(null, 'Ungheria'),
+(null, 'Stati Uniti');
+
+INSERT INTO Citta (idCitta, nome, idNazione) VALUES
+(null, 'Milano', 1),
+(null, 'Roma', 1),
+(null, 'Napoli', 1),
+(null, 'Torino', 1),
+(null, 'Catania', 1),
+(null, 'Bari', 1),
+(null, 'Madrid', 4),
+(null, 'Barcellona', 4),
+(null, 'Londra', 2),
+(null, 'Parigi', 3),
+(null, 'Bruxelles', 6),
+(null, 'New York', 9);
+
+INSERT INTO Aeroporto (codiceIataAeroporto, nome, idCitta) VALUES
+('MXP', 'Milano Malpensa', 1),
+('LIN', 'Milano Linate', 1),
+('FCO', 'Roma Fiumicino', 2),
+('NAP', 'Napoli Capodichino', 3),
+('TRN', 'Torino-Caselle', 4),
+('CTA', 'Catania Fontanarossa', 5),
+('BRI', 'Bari-Palese', 6),
+('MAD', 'Adolfo Suárez Madrid-Barajas', 7),
+('BCN', 'Josep Tarradellas Barcelona–El Prat', 8),
+('LHR', 'London Heathrow Airport', 9),
+('LCY', 'London City Airport', 9),
+('CDG', 'Paris Charles de Gaulle Airport', 10),
+('BRU', 'Brussels Airport', 11),
+('JFK', 'John F. Kennedy International Airport', 12);
+
+INSERT INTO ClasseServizio (idClasseServizio, tipologia) VALUES
+(null, 'Economy Class'),
+(null, 'Premium Economy Class'),
+(null, 'Business Class');
+
+INSERT INTO Aereo (idAereo, modello, matricola, anno) VALUES
+('null', 'Airbus A220‑100', 'EI‑IMB', 2019),
+('null', 'Airbus A220‑300', 'EI‑IMC', 2020),
+('null', 'Airbus A319‑100', 'EI‑IMF', 2012),
+('null', 'Airbus A320‑200', 'EI‑IMH', 2005),
+('null', 'Airbus A320‑200neo', 'EI‑IMJ', 2021),
+('null', 'Airbus A321LR/neo', 'EI‑IML', 2022),
+('null', 'Airbus A330‑200', 'EI‑IMH', 2010),
+('null', 'Airbus A330‑900neo', 'EI‑IMU', 2022),
+('null', 'Airbus A350‑900', 'EI‑IMW', 2021);
+
+INSERT INTO Tratta (idTratta, AeroportoPartenza, AeroportoArrivo) VALUES
+(null, 'CTA', 'LIN'),
+(null, 'LIN', 'LCY'),
+(null, 'CTA', 'LCY'),
+(null, 'NAP', 'FCO'),
+(null, 'FCO', 'JFK'),
+(null, 'NAP', 'JFK'),
+(null, 'LIN', 'FCO'),
+(null, 'FCO', 'MAD'),
+(null, 'LIN', 'MAD'),
+(null, 'LIN', 'BRU'),
+(null, 'LIN', 'CDG'),
+(null, 'LIN', 'NAP'),
+(null, 'FCO', 'TRN'),
+(null, 'BRI', 'FCO'),
+(null, 'FCO', 'LIN'),
+(null, 'BRI', 'LIN'),
+(null, 'FCO', 'CDG');
+
+INSERT INTO Volo (idVolo, codiceVolo, dataOraPartenza, dataOraArrivo, idAereo, idTratta) VALUES
+(null, 'AZ 1718', '2025-11-14 11:20:00', '2025-11-14 13:10:00', 2, 1),
+(null, 'AZ 238', '2025-11-14 15:15:00', '2025-11-14 16:05:00', 1, 2),
+(null, 'AZ 1264', '2025-11-10 11:20:00', '2025-11-10 12:15:00', 5, 4),
+(null, 'AZ 610', '2025-11-10 14:55:00', '2025-11-10 18:55:00', 8, 5),
+(null, 'AZ 2097', '2025-11-10 18:00:00', '2025-11-10 19:10:00', 2, 7),
+(null, 'AZ 64', '2025-11-10 21:25:00', '2025-11-10 23:59:00', 5, 8),
+(null, 'AZ 148', '2025-11-10 07:00:00', '2025-11-10 08:35:00', 1, 10),
+(null, 'AZ 300', '2025-11-10 07:20:00', '2025-11-10 08:55:00', 2, 11),
+(null, 'AZ 1299', '2025-11-10 10:25:00', '2025-11-10 11:50:00', 3, 12),
+(null, 'AZ 1421', '2025-11-06 09:15:00', '2025-11-06 10:30:00', 2, 13),
+(null, 'AZ 1417', '2025-11-06 13:15:00', '2025-11-06 14:30:00', 1, 13),
+(null, 'AZ 1435', '2025-11-06 17:15:00', '2025-11-06 18:30:00', 2, 13),
+(null, 'AZ 1423', '2025-11-06 18:35:00', '2025-11-06 19:45:00', 3, 13),
+(null, 'AZ 1431', '2025-11-06 21:35:00', '2025-11-06 22:50:00', 2, 13),
+(null, 'AZ 1612', '2025-11-24 11:20:00', '2025-11-06 12:30:00', 4, 14),
+(null, 'AZ 2038', '2025-11-24 14:00:00', '2025-11-06 15:10:00', 5, 15),
+(null, 'AZ 1638', '2025-11-24 08:15:00', '2025-11-06 09:45:00', 3, 16),
+(null, 'AZ 312', '2025-11-10 14:20:00', '2025-11-10 15:55:00', 1, 11), 
+(null, 'AZ 358', '2025-11-10 19:00:00', '2025-11-10 20:35:00', 1, 11),
+(null, 'AZ 2133', '2025-11-10 13:00:00', '2025-11-10 14:10:00', 5, 7), 
+(null, 'AZ 324', '2025-11-10 15:05:00', '2025-11-10 17:20:00', 5, 17),
+(null, 'AZ 1718', '2025-06-26 12:15:00', '2025-06-26 14:10:00', 3, 1);
+
+INSERT INTO Itinerario (idItinerario, nome) VALUES
+(null, 'CTA - LIN'),
+(null, 'LIN - LCY'),
+(null, 'CTA - LIN - LCY'),
+(null, 'NAP - FCO'),
+(null, 'FCO - JFK'),
+(null, 'NAP - FCO - JFK'),
+(null, 'LIN - FCO'),
+(null, 'FCO - MAD'),
+(null, 'LIN - FCO - MAD'),
+(null, 'LIN - BRU'),
+(null, 'LIN - CDG'),
+(null, 'LIN - NAP'),
+(null, 'FCO - TRN'),
+(null, 'FCO - TRN'),
+(null, 'FCO - TRN'),
+(null, 'FCO - TRN'),
+(null, 'FCO - TRN'),
+(null, 'BRI - FCO'),
+(null, 'FCO - LIN'),
+(null, 'BRI - FCO - LIN'),
+(null, 'BRI - LIN'),
+(null, 'LIN - CDG'),
+(null, 'LIN - CDG'),
+(null, 'LIN - FCO'),
+(null, 'FCO - CDG'),
+(null, 'LIN - FCO - CDG'),
+(null, 'CTA - LIN');
+
+INSERT INTO ItinerarioTratta (idItinerarioTratta, ordine, idItinerario, idTratta) VALUES
+(null, '1', 1, 1),
+(null, '1', 2, 2),
+(null, '1', 3, 1),
+(null, '2', 3, 2),
+(null, '1', 4, 4),
+(null, '1', 5, 5),
+(null, '1', 6, 4),
+(null, '2', 6, 5),
+(null, '1', 7, 7),
+(null, '1', 8, 8),
+(null, '1', 9, 7),
+(null, '2', 9, 8),
+(null, '1', 10, 10),
+(null, '1', 11, 11),
+(null, '1', 12, 12),
+(null, '1', 13, 13),
+(null, '1', 14, 13),
+(null, '1', 15, 13),
+(null, '1', 16, 13),
+(null, '1', 17, 13),
+(null, '1', 18, 14),
+(null, '1', 19, 15),
+(null, '1', 20, 14),
+(null, '2', 20, 15),
+(null, '1', 21, 16),
+(null, '1', 22, 11), 
+(null, '1', 23, 11), 
+(null, '1', 24, 7), 
+(null, '1', 25, 17), 
+(null, '1', 26, 7), 
+(null, '2', 26, 17),
+(null, '1', 27, 1);
+
+INSERT INTO Biglietto (idBiglietto, prezzo, dataAcquisto, idPasseggero, idClasseServizio, idItinerario) VALUES
+(null, 127.10, '2025-06-14 12:18:29', 1, 1, 3),
+(null, 59.49, '2025-06-20 14:07:40', 4, 1, 1),
+(null, 99.48, null, null, 1, 2),
+(null, 634.67, null, null, 1, 6),
+(null, 59.82, null, null, 1, 4),
+(null, 659.87, null, null, 2, 5),
+(null, 2005.87, null, null, 3, 5),
+(null, 115.30, null, null, 1, 21), 
+(null, 137.63, '2025-04-11 18:45:06', 2, 1, 20),
+(null, 108.30, '2025-05-11 18:45:06', 1, 1, 18),
+(null, 65.84, null, null, 1, 19),
+(null, 99.56, null, null, 1, 11), 
+(null, 99.56, null, null, 1, 11), 
+(null, 99.56, '2025-06-03 18:13:03', 1, 1, 11), 
+(null, 99.56, null, null, 1, 11), 
+(null, 99.56, null, null, 1, 11), 
+(null, 99.56, null, null, 1, 11), 
+(null, 323.56, null, null,  3, 11), 
+(null, 323.56, null, null, 3, 11), 
+(null, 323.56, null, null, 3, 11),
+(null, 92.84, null, null, 1, 13), 
+(null, 132.84, null, null, 1, 14), 
+(null, 54.84, null, null, 1, 15), 
+(null, 116.84, null, null,  1, 16), 
+(null, 92.84, null, null, 1, 17),
+(null, 99.56, null, null, 1, 22), 
+(null, 323.56, null, null, 3, 22), 
+(null, 99.56, null, null, 1, 23), 
+(null, 323.56, null, null, 3, 23), 
+(null, 185.90, null, null, 1, 26), 
+(null, 351.90, null, null, 3, 26), 
+(null, 58.12, null, null, 1, 24), 
+(null, 149.67, null, null, 1, 25),
+(null, 291.67, null, null, 3, 25),
+(null, 119.49, '2025-04-21 15:45:10', 8, 1, 27),
+(null, 59.49, '2025-06-26 12:16:46', 3, 1, 1), 
+(null, 59.49, '2025-06-26 10:36:41', 10, 1, 1), 
+(null, 59.49, '2025-06-26 16:26:20', 9, 1, 1),
+(null, 59.49, '2025-06-27 12:01:15', 6, 1, 1);
+
+
+INSERT INTO BigliettoVolo (idBigliettoVolo, posto, idBiglietto, idVolo) VALUES
+(null, '1A', 1, 1),
+(null, '3B', 1, 2),
+(null, '2A', 2, 1),
+(null, '1B', 3, 2),
+(null, '4B', 4, 3),
+(null, '8C', 4, 4),
+(null, '5A', 5, 3),
+(null, '2D', 6, 4),
+(null, '3F', 7, 4),
+(null, '1C', 8, 17),
+(null, '8A', 9, 15),
+(null, '3D', 9, 16),
+(null, '6C', 10, 15),
+(null, '3C', 11, 16),
+(null, '1A', 12, 8),
+(null, '2A', 13, 8),
+(null, '3A', 14, 8),
+(null, '4A', 15, 8),
+(null, '5A', 16, 8),
+(null, '6A', 17, 8),
+(null, '1B', 18, 8),
+(null, '2B', 19, 8),
+(null, '3B', 20, 8),
+(null, '1A', 21, 10),
+(null, '2A', 22, 11),
+(null, '3A', 23, 12),
+(null, '4A', 24, 13),
+(null, '5A', 25, 14),
+(null, '1A', 26, 18),
+(null, '2B', 27, 18),
+(null, '2A', 28, 19),
+(null, '3B', 29, 19),
+(null, '5A', 30, 20),
+(null, '5A', 30, 21),
+(null, '2C', 31, 20),
+(null, '2C', 31, 21),
+(null, '3A', 32, 20),
+(null, '8A', 33, 21),
+(null, '4A', 34, 21),
+(null, '2F', 35, 22),
+(null,'1B', 36, 1),
+(null,'3C', 37, 1),
+(null,'2D', 38, 1),
+(null,'5E', 39, 1);
+
+
+Query per visualizzare gli itinerari disponibili che partono da Milano e arrivano a Parigi in data 2025-11-10, considerando sia quelli diretti che con scalo
+SELECT DISTINCT 
+  i.idItinerario,
+  i.nome AS Itinerario,
+  v1.codiceVolo AS numeroVolo1,
+  c1.nome AS Partenza1,
+  c2.nome AS Arrivo1,
+  DATE_FORMAT(v1.dataOraPartenza, '%H:%i') AS orarioPartenza1,
+  DATE_FORMAT(v1.dataOraArrivo, '%H:%i') AS orarioArrivo1,
+  v2.codiceVolo AS numeroVolo2,
+  c3.nome AS Partenza2,
+  c4.nome AS Arrivo2,
+  DATE_FORMAT(v2.dataOraPartenza, '%H:%i') AS orarioPartenza2,
+  DATE_FORMAT(v2.dataOraArrivo, '%H:%i') AS orarioArrivo2,
+  b.prezzo,
+  cs.tipologia AS classeServizio
+ 
+FROM Itinerario i
+ 
+JOIN ItinerarioTratta it1 ON it1.idItinerario = i.idItinerario AND it1.ordine = 1
+JOIN tratta t1 ON t1.idTratta = it1.idTratta
+JOIN volo v1 ON v1.idTratta = t1.idTratta
+JOIN aeroporto a1 ON t1.AeroportoPartenza = a1.codiceIataAeroporto
+JOIN citta c1 ON a1.idCitta = c1.idCitta
+JOIN aeroporto a2 ON t1.AeroportoArrivo = a2.codiceIataAeroporto
+JOIN citta c2 ON a2.idCitta = c2.idCitta
+ 
+LEFT JOIN ItinerarioTratta it2 ON it2.idItinerario = i.idItinerario AND it2.ordine = 2
+LEFT JOIN tratta t2 ON t2.idTratta = it2.idTratta
+LEFT JOIN volo v2 ON v2.idTratta = t2.idTratta
+LEFT JOIN aeroporto a3 ON t2.AeroportoPartenza = a3.codiceIataAeroporto
+LEFT JOIN citta c3 ON a3.idCitta = c3.idCitta
+LEFT JOIN aeroporto a4 ON t2.AeroportoArrivo = a4.codiceIataAeroporto
+LEFT JOIN citta c4 ON a4.idCitta = c4.idCitta
+ 
+JOIN Biglietto b ON b.idItinerario = i.idItinerario AND b.idPasseggero IS NULL
+JOIN ClasseServizio cs ON b.idClasseServizio = cs.idClasseServizio
+JOIN BigliettoVolo bv1 ON bv1.idBiglietto = b.idBiglietto AND bv1.idVolo = v1.idVolo
+ 
+WHERE c1.nome = 'Milano'
+  AND COALESCE(c4.nome, c2.nome) = 'Parigi'
+  AND DATE(v1.dataOraPartenza) = '2025-11-10'
+ 
+ORDER BY v1.dataOraPartenza, b.prezzo;
+
+
+Query per visualizzare i biglietti disponibili, e quindi non associati a nessun passeggero, per uno specifico itinerario, in questo caso quello con id 11
+SELECT
+    b.idBiglietto,
+    i.nome AS Itinerario,
+    v.codiceVolo,
+    v.dataOraPartenza,
+    v.dataOraArrivo,
+    bv.posto,
+    b.prezzo,
+    cs.tipologia AS classeServizio
+FROM Biglietto b
+JOIN ClasseServizio cs ON b.idClasseServizio = cs.idClasseServizio
+JOIN Itinerario i ON b.idItinerario = i.idItinerario
+JOIN BigliettoVolo bv ON b.idBiglietto = bv.idBiglietto
+JOIN Volo v ON bv.idVolo = v.idVolo
+LEFT JOIN Passeggero p ON b.idPasseggero = p.idPasseggero
+WHERE b.idItinerario = 11
+  AND b.idPasseggero IS NULL;
+
+
+Query per visualizzare tutti i biglietti acquistati da uno specifico passeggero tramite l’id
+SELECT
+  b.idBiglietto,
+  b.dataAcquisto,
+  p.nome AS nome,
+  p.cognome AS cognome,
+  i.nome AS Itinerario,
+  b.prezzo
+FROM biglietto b
+JOIN passeggero p ON b.idPasseggero = p.idPasseggero
+JOIN itinerario i ON b.idItinerario = i.idItinerario
+WHERE b.idPasseggero = 1
+ORDER BY b.dataAcquisto DESC;
+
+
+Query per verificare la validità di uno specifico biglietto tramite l’id
+SELECT 
+  b.idBiglietto,
+  b.dataAcquisto,
+  p.nome AS nome,
+  p.cognome AS cognome,
+  ap.codiceIataAeroporto AS aeroportoPartenza,
+  ap2.codiceIataAeroporto AS aeroportoArrivo,
+  v.dataOraPartenza AS orarioPartenza,
+  v.dataOraArrivo AS orarioArrivo,
+  bv.posto,
+  CASE
+    WHEN b.dataAcquisto <= NOW() AND v.dataOraPartenza > NOW() THEN 'Valido'
+    ELSE 'Scaduto'
+  END AS validità
+FROM biglietto b
+JOIN passeggero p ON b.idPasseggero = p.idPasseggero
+JOIN BigliettoVolo bv ON bv.idBiglietto = b.idBiglietto
+JOIN volo v ON bv.idVolo = v.idVolo
+JOIN tratta t ON v.idTratta = t.idTratta
+JOIN aeroporto ap ON t.AeroportoPartenza = ap.codiceIataAeroporto
+JOIN aeroporto ap2 ON t.AeroportoArrivo = ap2.codiceIataAeroporto
+WHERE b.idBiglietto = 14;
+
+
+Query per visualizzare l’elenco dei passeggeri su uno specifico volo tramite l’id
+SELECT 
+  p.idPasseggero,
+  p.nome,
+  p.cognome,
+  bv.posto,
+  cs.tipologia AS classeServizio
+FROM BigliettoVolo bv
+JOIN biglietto b ON bv.idBiglietto = b.idBiglietto
+JOIN passeggero p ON b.idPasseggero = p.idPasseggero
+JOIN classeServizio cs ON b.idclasseServizio = cs.idClasseServizio
+WHERE bv.idVolo = 1
+ORDER BY p.nome;
+
+
+Query per visualizzare il numero di passeggeri per ogni volo (con almeno un passeggero presente)
+SELECT  
+  v.idVolo, 
+  v.codiceVolo, 
+  DATE(v.dataOraPartenza) AS dataVolo,
+  COUNT(DISTINCT b.idBiglietto) AS numeroPasseggeri 
+FROM volo v 
+JOIN BigliettoVolo bv ON v.idVolo = bv.idVolo 
+JOIN biglietto b ON bv.idBiglietto = b.idBiglietto 
+JOIN passeggero p ON b.idPasseggero = p.idPasseggero 
+GROUP BY v.idVolo, v.codiceVolo, DATE(v.dataOraPartenza)
+ORDER BY dataVolo;
+
+
+Query per visualizzare il ricavo totale di uno specifico itinerario tramite l’id (cioè la somma di tutti i biglietti venduti per quell’itinerario)
+SELECT 
+  i.idItinerario,
+  i.nome AS nomeItinerario,
+  SUM(b.prezzo) AS ricavoTotale
+FROM itinerario i
+JOIN biglietto b ON b.idItinerario = i.idItinerario
+WHERE i.idItinerario = 1
+  AND b.idPasseggero IS NOT NULL
+GROUP BY i.idItinerario, i.nome;
+
+
+Query per visualizzare tutti gli aeroporti di una specifica nazione
+SELECT 
+  a.codiceIataAeroporto AS codiceIata,
+  a.nome AS aeroporto,
+  c.nome AS citta
+FROM aeroporto a
+JOIN citta c ON a.idCitta = c.idCitta
+JOIN nazione n ON c.idNazione = n.idNazione
+WHERE n.nome = 'Italia';
